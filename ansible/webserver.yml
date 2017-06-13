@@ -1,0 +1,10 @@
+# webserver.yml
+---
+
+- name:  Configure webserver
+  hosts: localhost
+  connection: local
+
+  roles:
+    - common
+    - web

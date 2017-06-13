@@ -1,0 +1,184 @@
+---
+
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: Demonstartion of baking AMIs using AWS CodeBuild, HashiCorp Packer, and Ansible
+
+
+Parameters:
+  CCRepositoryName:
+    Type: String
+    Default: aws-ami-builder
+    Description: Name of CodeCommit repository
+
+Metadata:
+  "AWS::CloudFormation::Interfaces":
+    ParameterGroups:
+      -
+        Label:
+          default: CodeCommit
+        Parameters:
+          - CCRepositoryName
+    ParameterLabels:
+      CCRepositoryName:
+        default: CodeCommit Repository Name
+
+Resources:
+  CodeCommitRepo:
+    Type: AWS::CodeCommit::Repository
+    Properties:
+      RepositoryDescription: Sample code to bake a webserver AMI
+      RepositoryName: !Ref CCRepositoryName
+
+  CodeBuild:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Artifacts:
+        Type: NO_ARTIFACTS
+      Description: Bakes AMI via Packer and Ansible
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/ubuntu-base:14.04
+        Type: LINUX_CONTAINER
+      Name: aws-ami-builder
+      ServiceRole: !GetAtt CodeBuildRole.Arn
+      Source:
+        Location: !GetAtt CodeCommitRepo.CloneUrlHttp
+        Type: CODECOMMIT
+
+  CodeBuildRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: Allow
+            Principal:
+              Service:
+                - codebuild.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      RoleName: aws-ami-builder_codebuild_role
+
+  CodeBuildPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: aws-ami-builder_codebuild_policy
+      Roles:
+        - !Ref CodeBuildRole
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            Resource:
+              - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/aws-ami-builder"
+              - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/aws-ami-builder:*"
+          -
+            Effect: Allow
+            Action:
+              - s3:PutObject
+              - s3:GetObject
+              - s3:GetObjectVersion
+            Resource:
+              - !Sub "arn:aws:s3:::codepipeline-${AWS::Region}-*"
+          -
+            Effect: Allow
+            Action:
+              - codecommit:GitPull
+            Resource:
+              - !GetAtt CodeCommitRepo.Arn
+          # see https://www.packer.io/docs/builders/amazon.html#using-an-iam-instance-profile
+          - 
+            Effect: Allow
+            Action:
+              - ec2:AttachVolume
+              - ec2:AuthorizeSecurityGroupIngress
+              - ec2:CopyImage
+              - ec2:CreateImage
+              - ec2:CreateKeypair
+              - ec2:CreateSecurityGroup
+              - ec2:CreateSnapshot
+              - ec2:CreateTags
+              - ec2:CreateVolume
+              - ec2:DeleteKeypair
+              - ec2:DeleteSecurityGroup
+              - ec2:DeleteSnapshot
+              - ec2:DeleteVolume
+              - ec2:DeregisterImage
+              - ec2:DescribeImageAttribute
+              - ec2:DescribeImages
+              - ec2:DescribeInstances
+              - ec2:DescribeRegions
+              - ec2:DescribeSecurityGroups
+              - ec2:DescribeSnapshots
+              - ec2:DescribeSubnets
+              - ec2:DescribeTags
+              - ec2:DescribeVolumes
+              - ec2:DetachVolume
+              - ec2:GetPasswordData
+              - ec2:ModifyImageAttribute
+              - ec2:ModifyInstanceAttribute
+              - ec2:ModifySnapshotAttribute
+              - ec2:RegisterImage
+              - ec2:RunInstances
+              - ec2:StopInstances
+              - ec2:TerminateInstances
+            Resource:
+              - "*"
+    
+  EC2SampleRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      RoleName: aws-ami-builder_ec2_sample_role
+      Policies:
+        -
+          PolicyName: aws-ami-builder_ec2_sample_policy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                  - logs:DescribeLogStreams
+                Resource:
+                  - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:*"
+
+  EC2SampleInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: /
+      Roles:
+        - !Ref EC2SampleRole
+
+Outputs:
+  CodeCommitRepository:
+    Description: CodeCommit Repository
+    Value: !GetAtt CodeCommitRepo.Name
+
+  CodeCommitRepositorySsh:
+    Description: CodeCommit Repository
+    Value: !GetAtt CodeCommitRepo.CloneUrlSsh
+
+  CodeCommitRepositoryHttp:
+    Description: CodeCommit Repository
+    Value: !GetAtt CodeCommitRepo.CloneUrlHttp
+

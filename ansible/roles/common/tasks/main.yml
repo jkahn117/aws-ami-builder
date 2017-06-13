@@ -1,0 +1,14 @@
+# Common Tasks
+---
+
+- name: Install AWS CloudWatch Logs agent
+  become: true
+  yum:
+    name: awslogs
+    state: latest
+
+- name: Start CloudWatch Logs agent
+  become: yes
+  service:
+    name: awslogs
+    state: started

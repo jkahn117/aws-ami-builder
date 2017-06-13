@@ -1,0 +1,57 @@
+{
+	"variables": {
+		"aws_region": "{{env `AWS_REGION`}}",
+		"aws_ami_name": "webserver_amazon_linux_{{isotime \"02Jan2006\"}}"
+	},
+
+	"builders": [
+		{
+			"type": "amazon-ebs",
+			"region": "{{user `aws_region`}}",
+			"instance_type": "t2.micro",
+			"ssh_username": "ec2-user",
+			"ami_name": "{{user `aws_ami_name`}}",
+			"ami_description": "My customized webserver",
+			"associate_public_ip_address": "true",
+			"source_ami_filter": {
+				"filters": {
+					"virtualization-type": "hvm",
+					"name": "amzn-ami-hvm-*-gp2",
+					"root-device-type": "ebs"
+				},
+				"owners": ["137112412989", "591542846629", "801119661308", "102837901569", "013907871322", "206029621532", "286198878708", "443319210888"],
+				"most_recent": true
+			}
+		}
+	],
+
+	"provisioners": [
+		{
+			"type": "shell",
+			"inline": [
+				"sudo yum update -y",
+				"sudo /usr/sbin/update-motd --disable",
+				"echo 'No unauthorized access permitted' | sudo tee /etc/motd",
+				"sudo rm /etc/issue",
+				"sudo ln -s /etc/motd /etc/issue"
+			]
+		},
+
+		{
+			"type": "shell",
+			"inline": [
+				"sudo pip install ansible"
+			]
+		},
+
+		{
+			"type": "ansible-local",
+			"playbook_file": "ansible/webserver.yml",
+			"extra_arguments": [ "--verbose", "--extra-vars \"aws_region={{ user `aws_region` }}\"" ],
+			"role_paths": [
+				"ansible/roles/common",
+				"ansible/roles/web"
+			]
+		}
+	]
+}

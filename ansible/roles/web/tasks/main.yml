@@ -1,0 +1,32 @@
+# Web Tasks
+---
+
+- name: Ensure nginx is at the latest version
+  become: true
+  yum:
+    name: nginx
+    state: latest
+- name: Write the nginx configuration file
+  become: true
+  copy:
+    src: etc/nginx/
+    dest: /etc/nginx/
+  notify:
+    - restart nginx
+- name: Copy the awslogs configuration file
+  become: true
+  copy:
+    src: etc/awslogs/
+    dest: /etc/awslogs/
+  notify:
+    - restart awslogs
+- name: Copy logrotate configuration
+  become: true
+  copy:
+    src: etc/logrotate.d/
+    dest: /etc/logrotate.d/
+- name: Ensure nginx is running
+  become: true
+  service:
+    name: nginx
+    state: started
