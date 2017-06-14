@@ -41,7 +41,7 @@ The CloudFormation stack will require several minutes to finish creation.  Once 
 ```
 $ aws cloudformation describe-stacks \
         --stack-name    aws-ami-builder \
-        --query         "Stacks[].Outputs[?OutputKey == 'CodeCommitRepositoryHttp'].OutputValue"
+        --query         "Stacks[].Outputs[?OutputKey=='CodeCommitRepositoryHttp']"
 ```
 
 ## Commit Code and Build AMI
@@ -68,7 +68,8 @@ The build will require several minutes. The AWS Console provides a nice overview
 As part of the build process, Packer will create a new AMI in your account.  We can query for a listing of custom AMIs in your account as follows (the AMI will have a name like `webserver_amazon_linux_<TODAYS_DATE>`):
 
 ```
-$ aws ec2 describe-images
+$ aws ec2 describe-images \
+        --query         "Images[]"
 ```
 
 ## Launching a Web Server Instance
@@ -85,8 +86,7 @@ When ready, it is easy to remove all resources created in this sample via CloudF
 
 ```
 $ aws cloudformation delete-stack \
-        --stack-name    aws-ami-builder \
-        --query         "Stacks[].Outputs[?OutputKey=='CodeCommitRepositoryHttp']"
+        --stack-name    aws-ami-builder
 ```
 
 
