@@ -69,16 +69,12 @@ As part of the build process, Packer will create a new AMI in your account.  We 
 
 ```
 $ aws ec2 describe-images \
-        --query         "Images[]"
+        --query         "Images[?contains(Name, 'webserver_amazon_linux')].ImageId"
 ```
 
 ## Launching a Web Server Instance
 
-
-
-
-* filters section pulls most recent amazon linux from amis owned by Amazon
-
+Finally, we can test our new web server image by launching a new EC2 Instance using the AMI ID captured in the previous step.  We will leave [launching the instance](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/launching-instance.html) and navigating to it in a browser to you, but you should be greeted with an nginx on Amazon Linux test page.
 
 ## Cleaning Up
 
@@ -89,7 +85,6 @@ $ aws cloudformation delete-stack \
         --stack-name    aws-ami-builder
 ```
 
-
 ## Further Reading
 
 If you are interested in diving deeper on approaches to building AMIs, the following articles may be of interest:
@@ -98,6 +93,10 @@ If you are interested in diving deeper on approaches to building AMIs, the follo
 * [AMI Builder with CodeBuild and Packer](https://aws.amazon.com/blogs/devops/how-to-create-an-ami-builder-with-aws-codebuild-and-hashicorp-packer/)
 
 As a next step, you may also consider using tools such as [Amazon EC2 Systems Manager to automate deployment of your newly created AMI](https://aws.amazon.com/blogs/aws/streamline-ami-maintenance-and-patching-using-amazon-ec2-systems-manager-automation/).
+
+### Our Packer Template
+
+One aspect of our Packer template (`webserver.packer.json`) that may require some explanation is the [`source_ami_filter`](https://www.packer.io/docs/builders/amazon-ebs.html#source_ami_filter) section.  In this case, we are filtering the list of available AMIs for the latest version of the Amazon Linux AMI owned by Amazon, backed by EBS GP2 storage.
 
 ## Authors
 
