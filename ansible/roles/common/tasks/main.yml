@@ -1,6 +1,12 @@
 # Common Tasks
 ---
 
+- name: Copy AWS CLI Configuration file
+  become: true
+  template:
+    src: etc/awslogs/awscli.conf.j2
+    dest: /etc/awslogs/awscli.conf
+
 - name: Install AWS CloudWatch Logs agent
   become: true
   yum:
