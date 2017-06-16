@@ -76,6 +76,8 @@ $ aws ec2 describe-images \
 
 Finally, we can test our new web server image by launching a new EC2 Instance using the AMI ID captured in the previous step.  We will leave [launching the instance](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/launching-instance.html) and navigating to it in a browser to you, but you should be greeted with an nginx on Amazon Linux test page.
 
+> Remember to select the EC2 IAM Role when launching your EC2 instance ("aws-ami-builder-EC2Role-XXX").
+
 ## Cleaning Up
 
 When ready, it is easy to remove all resources created in this sample via CloudFormation:

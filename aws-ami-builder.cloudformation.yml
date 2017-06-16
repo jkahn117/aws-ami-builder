@@ -162,7 +162,7 @@ Resources:
                 Resource:
                   - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:*"
 
-  EC2SampleInstanceProfile:
+  EC2Role:
     Type: AWS::IAM::InstanceProfile
     Properties:
       Path: /
